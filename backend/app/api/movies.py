@@ -55,11 +55,17 @@ async def get_popular_movies(
     """
     results = await tmdb_service.get_popular_movies(page)
     
-    # Sauvegarder en BDD
-    for movie_data in results.get("results", []):
+    # Sauvegarder en BDD (results est une liste)
+    for movie_data in results:
         tmdb_service.save_movie_to_db(db, movie_data)
     
-    return results
+    # Retourner le format attendu
+    return {
+        "page": page,
+        "results": results,
+        "total_results": len(results),
+        "total_pages": 1
+    }
 
 
 @router.get("/top-rated", response_model=dict)
