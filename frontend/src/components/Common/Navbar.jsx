@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Film, Compass, Star, Sparkles, User, LogOut } from 'lucide-react'
+import { Film, Music, Compass, Star, Sparkles, User, LogOut } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { motion } from 'framer-motion'
 
@@ -8,7 +8,8 @@ const Navbar = () => {
   const { user, logout } = useAuth()
 
   const navItems = [
-    { path: '/', label: 'Accueil', icon: Film },
+    { path: '/movies', label: 'Films', icon: Film },
+    { path: '/music', label: 'Musique', icon: Music },
     { path: '/discover', label: 'Découvrir', icon: Compass },
     { path: '/my-ratings', label: 'Mes Notes', icon: Star },
     { path: '/recommendations', label: 'Recommandations', icon: Sparkles },

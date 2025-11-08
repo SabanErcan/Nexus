@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     tmdb_base_url: str = "https://api.themoviedb.org/3"
     tmdb_image_base_url: str = "https://image.tmdb.org/t/p"
     
+    # Spotify API
+    spotify_client_id: str
+    spotify_client_secret: str
+    
     # Sécurité JWT
     secret_key: str
     algorithm: str = "HS256"

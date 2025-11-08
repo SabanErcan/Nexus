@@ -19,10 +19,18 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     is_active = Column(Boolean, default=True)
     
-    # Relations
-    ratings = relationship("Rating", back_populates="user", cascade="all, delete-orphan")
+    # Relations - Films
+    movie_ratings = relationship("Rating", back_populates="user", cascade="all, delete-orphan")
     recommendations = relationship("Recommendation", back_populates="user", cascade="all, delete-orphan")
-    preferences = relationship("UserMoviePreference", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    movie_preferences = relationship("UserMoviePreference", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    
+    # Relations - Autres médias
+    preferences = relationship("UserPreference", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    music_ratings = relationship("MusicRating", back_populates="user", cascade="all, delete-orphan")
+    music_recommendations = relationship("MusicRecommendation", back_populates="user", cascade="all, delete-orphan")
+    book_ratings = relationship("BookRating", back_populates="user", cascade="all, delete-orphan")
+    tv_ratings = relationship("TVRating", back_populates="user", cascade="all, delete-orphan")
+    game_ratings = relationship("GameRating", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}')>"

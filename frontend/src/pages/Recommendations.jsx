@@ -4,6 +4,7 @@ import { Sparkles, RefreshCw, AlertCircle, Zap } from 'lucide-react'
 import recommendationService from '../services/recommendationService'
 import ratingService from '../services/ratingService'
 import MovieGrid from '../components/Movies/MovieGrid'
+import MovieCard from '../components/Movies/MovieCard'
 import Loading from '../components/Common/Loading'
 import toast from 'react-hot-toast'
 
@@ -215,6 +216,7 @@ const Recommendations = () => {
                     movie={rec.movie}
                     onRate={handleRate}
                     userRating={userRatings[rec.movie_id]}
+                    key={rec.movie_id}
                   />
 
                   {/* Explanation */}

@@ -11,6 +11,9 @@ import Discover from './pages/Discover'
 import MyRatings from './pages/MyRatings'
 import Recommendations from './pages/Recommendations'
 import Profile from './pages/Profile'
+import MusicSearch from './pages/MusicSearch'
+import MusicDiscover from './pages/MusicDiscover'
+import MusicRatings from './pages/MusicRatings'
 
 // Layout
 import Navbar from './components/Common/Navbar'
@@ -55,6 +58,10 @@ function App() {
                 }
               >
                 <Route path="/" element={<Home />} />
+                <Route path="/movies" element={<Home />} />
+                <Route path="/music" element={<MusicSearch />} />
+                <Route path="/music/discover" element={<MusicDiscover />} />
+                <Route path="/music/ratings" element={<MusicRatings />} />
                 <Route path="/discover" element={<Discover />} />
                 <Route path="/my-ratings" element={<MyRatings />} />
                 <Route path="/recommendations" element={<Recommendations />} />

@@ -6,18 +6,31 @@ from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import Optional, List
 from app.schemas.movie import MovieResponse
+from app.schemas.music import TrackResponse
 
 
-class RecommendationResponse(BaseModel):
-    """Schema de réponse pour une recommandation"""
+class RecommendationBase(BaseModel):
+    """Schema de base pour les recommandations"""
     id: int
     user_id: int
-    movie_id: int
     score: float
     created_at: datetime
-    movie: MovieResponse
+    is_viewed: bool = False
+    is_dismissed: bool = False
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RecommendationResponse(RecommendationBase):
+    """Schema de réponse pour une recommandation de film"""
+    movie_id: int
+    movie: MovieResponse
+
+
+class MusicRecommendationResponse(RecommendationBase):
+    """Schema de réponse pour une recommandation musicale"""
+    track_id: int
+    track: TrackResponse
 
 
 class RecommendationExplanation(BaseModel):

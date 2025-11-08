@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models.movie import Movie, Genre, MovieGenre
+from app.models.tv_show import TVShow
 
 
 class TMDBService:
@@ -51,9 +52,23 @@ class TMDBService:
         
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.get(url, params=params, timeout=10.0)
+                # If the provided API key looks like a JWT (v4 access token), use
+                # it as a Bearer token in the Authorization header. Otherwise,
+                # pass it as the `api_key` query parameter (v3 key).
+                headers = None
+                if self.api_key.strip().startswith("eyJ"):
+                    headers = {"Authorization": f"Bearer {self.api_key}"}
+
+                response = await client.get(url, params=params, headers=headers, timeout=10.0)
                 response.raise_for_status()
                 return response.json()
+            except httpx.HTTPStatusError as e:
+                # Return a clearer 503 with TMDB response summary
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail=(f"TMDB API returned {e.response.status_code}: "
+                            f"{e.response.text[:200]}"),
+                )
             except httpx.HTTPError as e:
                 raise HTTPException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -120,6 +135,69 @@ class TMDBService:
             Films now playing
         """
         return await self._make_request("/movie/now_playing", {"page": page})
+    
+    # TV Shows Methods
+    
+    async def search_tv_shows(self, query: str, page: int = 1) -> Dict[str, Any]:
+        """
+        Recherche de séries TV par titre
+        
+        Args:
+            query: Terme de recherche
+            page: Numéro de page
+        
+        Returns:
+            Résultats de recherche TMDB
+        """
+        return await self._make_request("/search/tv", {"query": query, "page": page})
+    
+    async def get_tv_show_details(self, tv_id: int) -> Dict[str, Any]:
+        """
+        Récupère les détails d'une série TV
+        
+        Args:
+            tv_id: ID TMDB de la série
+        
+        Returns:
+            Détails de la série
+        """
+        return await self._make_request(f"/tv/{tv_id}", {"append_to_response": "credits,videos,similar"})
+    
+    async def get_popular_tv_shows(self, page: int = 1) -> Dict[str, Any]:
+        """
+        Récupère les séries TV populaires
+        
+        Args:
+            page: Numéro de page
+        
+        Returns:
+            Séries populaires
+        """
+        return await self._make_request("/tv/popular", {"page": page})
+    
+    async def get_top_rated_tv_shows(self, page: int = 1) -> Dict[str, Any]:
+        """
+        Récupère les séries TV les mieux notées
+        
+        Args:
+            page: Numéro de page
+        
+        Returns:
+            Séries top rated
+        """
+        return await self._make_request("/tv/top_rated", {"page": page})
+    
+    async def get_on_the_air_tv_shows(self, page: int = 1) -> Dict[str, Any]:
+        """
+        Récupère les séries TV en cours de diffusion
+        
+        Args:
+            page: Numéro de page
+        
+        Returns:
+            Séries en diffusion
+        """
+        return await self._make_request("/tv/on_the_air", {"page": page})
     
     async def discover_movies(
         self,
@@ -251,3 +329,48 @@ class TMDBService:
         db.refresh(movie)
         
         return movie
+    
+    def save_tv_show_to_db(self, db: Session, tv_data: Dict[str, Any]) -> TVShow:
+        """
+        Sauvegarde une série TV depuis TMDB dans la base de données
+        
+        Args:
+            db: Session de base de données
+            tv_data: Données de la série depuis TMDB
+        
+        Returns:
+            TVShow créé ou existant
+        """
+        tv_id = tv_data["id"]
+        
+        # Vérifier si la série existe déjà
+        existing_show = db.query(TVShow).filter(TVShow.id == tv_id).first()
+        
+        if existing_show:
+            return existing_show
+        
+        # Créer la série
+        tv_show = TVShow(
+            id=tv_id,
+            title=tv_data.get("name"),  # TMDB uses 'name' for TV shows
+            original_title=tv_data.get("original_name"),
+            overview=tv_data.get("overview"),
+            first_air_date=tv_data.get("first_air_date"),
+            last_air_date=tv_data.get("last_air_date"),
+            poster_path=tv_data.get("poster_path"),
+            backdrop_path=tv_data.get("backdrop_path"),
+            vote_average=tv_data.get("vote_average"),
+            vote_count=tv_data.get("vote_count"),
+            popularity=tv_data.get("popularity"),
+            number_of_seasons=tv_data.get("number_of_seasons"),
+            number_of_episodes=tv_data.get("number_of_episodes"),
+            status=tv_data.get("status"),
+            genres=[{"id": g["id"], "name": g["name"]} for g in tv_data.get("genres", [])],
+            networks=[{"id": n["id"], "name": n["name"]} for n in tv_data.get("networks", [])]
+        )
+        
+        db.add(tv_show)
+        db.commit()
+        db.refresh(tv_show)
+        
+        return tv_show
