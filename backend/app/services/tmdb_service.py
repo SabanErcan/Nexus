@@ -100,17 +100,19 @@ class TMDBService:
         """
         return await self._make_request(f"/movie/{movie_id}")
     
-    async def get_popular_movies(self, page: int = 1) -> Dict[str, Any]:
+    async def get_popular_movies(self, page: int = 1, limit: int = 20) -> List[Dict[str, Any]]:
         """
         Récupère les films populaires
         
         Args:
             page: Numéro de page
+            limit: Nombre de films à retourner
         
         Returns:
-            Films populaires
+            Liste de films populaires
         """
-        return await self._make_request("/movie/popular", {"page": page})
+        response = await self._make_request("/movie/popular", {"page": page})
+        return response.get("results", [])[:limit]
     
     async def get_top_rated_movies(self, page: int = 1) -> Dict[str, Any]:
         """
@@ -135,6 +137,20 @@ class TMDBService:
             Films now playing
         """
         return await self._make_request("/movie/now_playing", {"page": page})
+    
+    async def get_similar_movies(self, movie_id: int, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Récupère les films similaires à un film donné
+        
+        Args:
+            movie_id: ID TMDB du film
+            limit: Nombre maximum de films similaires
+        
+        Returns:
+            Liste de films similaires
+        """
+        response = await self._make_request(f"/movie/{movie_id}/similar", {"page": 1})
+        return response.get("results", [])[:limit]
     
     # TV Shows Methods
     

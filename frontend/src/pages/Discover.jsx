@@ -40,7 +40,7 @@ const Discover = () => {
       setUserRatings(ratingsMap)
     } catch (error) {
       console.error('Failed to load data:', error)
-      toast.error('Erreur lors du chargement')
+      toast.error(`Erreur: ${error.response?.data?.detail || error.message || 'Impossible de charger les films'}`)
     } finally {
       setLoading(false)
     }
@@ -199,6 +199,13 @@ const Discover = () => {
       {/* Results */}
       {loading ? (
         <Loading message="Recherche en cours..." />
+      ) : movies.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-xl text-gray-400 mb-2">Aucun film trouvé</p>
+          <p className="text-sm text-gray-500">
+            Essayez de modifier vos filtres ou votre recherche
+          </p>
+        </div>
       ) : (
         <>
           <div className="mb-4">

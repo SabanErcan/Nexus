@@ -19,6 +19,29 @@ const MusicGrid = ({ tracks, loading, onRatingChange, userRatings }) => {
         );
     }
 
+    // Gérer userRatings comme objet {trackId: {ratingId, rating}} ou nombre ou ancien format
+    const getUserRating = (trackId) => {
+        if (!userRatings) return null;
+        
+        // Si c'est un objet (nouveau format)
+        if (!Array.isArray(userRatings)) {
+            const ratingData = userRatings[trackId];
+            if (!ratingData) return null;
+            
+            // Si c'est un objet avec ratingId et rating
+            if (typeof ratingData === 'object' && ratingData.rating !== undefined) {
+                return ratingData.rating;
+            }
+            
+            // Si c'est juste un nombre
+            return ratingData;
+        }
+        
+        // Si c'est un tableau (ancien format)
+        const rating = userRatings.find((r) => r.track_id === trackId);
+        return rating ? rating.rating : null;
+    };
+
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
             {tracks.map((track) => (
@@ -26,7 +49,7 @@ const MusicGrid = ({ tracks, loading, onRatingChange, userRatings }) => {
                     key={track.id}
                     track={track}
                     onRatingChange={(rating) => onRatingChange(track.id, rating)}
-                    userRating={userRatings?.find((r) => r.track_id === track.id)}
+                    userRating={getUserRating(track.id)}
                 />
             ))}
         </div>
@@ -48,19 +71,23 @@ MusicGrid.propTypes = {
     ),
     loading: PropTypes.bool,
     onRatingChange: PropTypes.func.isRequired,
-    userRatings: PropTypes.arrayOf(
-        PropTypes.shape({
-            id: PropTypes.number.isRequired,
-            track_id: PropTypes.number.isRequired,
-            rating: PropTypes.number.isRequired
-        })
-    )
+    // userRatings peut être un objet {trackId: rating} ou un tableau
+    userRatings: PropTypes.oneOfType([
+        PropTypes.object,
+        PropTypes.arrayOf(
+            PropTypes.shape({
+                id: PropTypes.number.isRequired,
+                track_id: PropTypes.number.isRequired,
+                rating: PropTypes.number.isRequired
+            })
+        )
+    ])
 };
 
 MusicGrid.defaultProps = {
     loading: false,
     tracks: [],
-    userRatings: []
+    userRatings: {}
 };
 
 export default MusicGrid;

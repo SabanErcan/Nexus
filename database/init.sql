@@ -338,10 +338,243 @@ LEFT JOIN recommendations rec ON u.id = rec.user_id AND rec.is_viewed = FALSE
 GROUP BY u.id, ump.total_ratings, ump.average_rating, 
          ump.highly_rated_count, ump.favorite_genres, ump.last_rating_date;
 
+-- ============================================
+-- TABLES MUSIQUE (Spotify)
+-- ============================================
+
+-- Table des pistes musicales
+CREATE TABLE tracks (
+    id SERIAL PRIMARY KEY,
+    spotify_id VARCHAR(100) UNIQUE NOT NULL,
+    title VARCHAR(500) NOT NULL,
+    artist VARCHAR(500) NOT NULL,
+    album VARCHAR(500),
+    release_year INTEGER,
+    preview_url VARCHAR(500),
+    image_url VARCHAR(500),
+    duration_ms BIGINT,
+    popularity INTEGER,
+    genres JSONB DEFAULT '[]',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_tracks_spotify_id ON tracks(spotify_id);
+CREATE INDEX idx_tracks_title ON tracks(title);
+CREATE INDEX idx_tracks_artist ON tracks(artist);
+CREATE INDEX idx_tracks_popularity ON tracks(popularity DESC);
+
+-- Table des notes musicales
+CREATE TABLE music_ratings (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    track_id INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, track_id)
+);
+
+CREATE INDEX idx_music_ratings_user ON music_ratings(user_id);
+CREATE INDEX idx_music_ratings_track ON music_ratings(track_id);
+CREATE INDEX idx_music_ratings_rating ON music_ratings(rating);
+
+-- Table des recommandations musicales
+CREATE TABLE music_recommendations (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    track_id INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+    score DECIMAL(5,3) NOT NULL CHECK (score >= 0 AND score <= 1),
+    algorithm_type VARCHAR(50) NOT NULL,
+    explanation TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_viewed BOOLEAN DEFAULT FALSE,
+    is_dismissed BOOLEAN DEFAULT FALSE
+);
+
+CREATE INDEX idx_music_recommendations_user ON music_recommendations(user_id);
+CREATE INDEX idx_music_recommendations_track ON music_recommendations(track_id);
+CREATE INDEX idx_music_recommendations_score ON music_recommendations(score DESC);
+
+-- Trigger pour mise à jour de tracks
+CREATE TRIGGER update_tracks_updated_at BEFORE UPDATE ON tracks
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_music_ratings_updated_at BEFORE UPDATE ON music_ratings
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- TABLES LIVRES (OpenLibrary / Google Books)
+-- ============================================
+
+CREATE TABLE books (
+    id SERIAL PRIMARY KEY,
+    external_id VARCHAR(100) UNIQUE NOT NULL,
+    title VARCHAR(500) NOT NULL,
+    author VARCHAR(500) NOT NULL,
+    publisher VARCHAR(300),
+    published_date DATE,
+    isbn VARCHAR(20),
+    description TEXT,
+    cover_url VARCHAR(500),
+    page_count INTEGER,
+    language VARCHAR(10),
+    categories JSONB DEFAULT '[]',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_books_external_id ON books(external_id);
+CREATE INDEX idx_books_title ON books(title);
+CREATE INDEX idx_books_author ON books(author);
+
+CREATE TABLE book_ratings (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, book_id)
+);
+
+CREATE INDEX idx_book_ratings_user ON book_ratings(user_id);
+CREATE INDEX idx_book_ratings_book ON book_ratings(book_id);
+
+-- ============================================
+-- TABLES SÉRIES TV (TMDB)
+-- ============================================
+
+CREATE TABLE tv_shows (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(500) NOT NULL,
+    original_name VARCHAR(500),
+    overview TEXT,
+    first_air_date DATE,
+    poster_path VARCHAR(255),
+    backdrop_path VARCHAR(255),
+    vote_average DECIMAL(3,1),
+    vote_count INTEGER,
+    popularity DECIMAL(10,3),
+    original_language VARCHAR(10),
+    number_of_seasons INTEGER,
+    number_of_episodes INTEGER,
+    status VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_tv_shows_name ON tv_shows(name);
+CREATE INDEX idx_tv_shows_popularity ON tv_shows(popularity DESC);
+
+CREATE TABLE tv_genres (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE tv_show_genres (
+    tv_show_id INTEGER REFERENCES tv_shows(id) ON DELETE CASCADE,
+    genre_id INTEGER REFERENCES tv_genres(id) ON DELETE CASCADE,
+    PRIMARY KEY (tv_show_id, genre_id)
+);
+
+CREATE TABLE tv_ratings (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    tv_show_id INTEGER NOT NULL REFERENCES tv_shows(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, tv_show_id)
+);
+
+CREATE INDEX idx_tv_ratings_user ON tv_ratings(user_id);
+CREATE INDEX idx_tv_ratings_tv_show ON tv_ratings(tv_show_id);
+
+-- Genres TV TMDB
+INSERT INTO tv_genres (id, name) VALUES
+    (10759, 'Action & Adventure'),
+    (16, 'Animation'),
+    (35, 'Comedy'),
+    (80, 'Crime'),
+    (99, 'Documentary'),
+    (18, 'Drama'),
+    (10751, 'Family'),
+    (10762, 'Kids'),
+    (9648, 'Mystery'),
+    (10763, 'News'),
+    (10764, 'Reality'),
+    (10765, 'Sci-Fi & Fantasy'),
+    (10766, 'Soap'),
+    (10767, 'Talk'),
+    (10768, 'War & Politics'),
+    (37, 'Western')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================
+-- TABLES JEUX VIDÉO (IGDB/RAWG)
+-- ============================================
+
+CREATE TABLE games (
+    id SERIAL PRIMARY KEY,
+    external_id VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(500) NOT NULL,
+    description TEXT,
+    release_date DATE,
+    cover_url VARCHAR(500),
+    background_url VARCHAR(500),
+    rating DECIMAL(3,1),
+    platforms JSONB DEFAULT '[]',
+    genres JSONB DEFAULT '[]',
+    developers JSONB DEFAULT '[]',
+    publishers JSONB DEFAULT '[]',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_games_external_id ON games(external_id);
+CREATE INDEX idx_games_name ON games(name);
+
+CREATE TABLE game_ratings (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, game_id)
+);
+
+CREATE INDEX idx_game_ratings_user ON game_ratings(user_id);
+CREATE INDEX idx_game_ratings_game ON game_ratings(game_id);
+
+-- Triggers pour toutes les nouvelles tables
+CREATE TRIGGER update_books_updated_at BEFORE UPDATE ON books
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_book_ratings_updated_at BEFORE UPDATE ON book_ratings
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_tv_shows_updated_at BEFORE UPDATE ON tv_shows
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_tv_ratings_updated_at BEFORE UPDATE ON tv_ratings
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_games_updated_at BEFORE UPDATE ON games
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_game_ratings_updated_at BEFORE UPDATE ON game_ratings
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Message de succès
 DO $$
 BEGIN
     RAISE NOTICE '✅ Nexus Recommendations Database initialized successfully!';
-    RAISE NOTICE '📊 Tables created: users, movies, genres, ratings, recommendations, and more';
+    RAISE NOTICE '📊 Tables created: users, movies, genres, ratings, recommendations';
+    RAISE NOTICE '🎵 Music tables: tracks, music_ratings, music_recommendations';
+    RAISE NOTICE '📚 Books tables: books, book_ratings';
+    RAISE NOTICE '📺 TV Shows tables: tv_shows, tv_genres, tv_ratings';
+    RAISE NOTICE '🎮 Games tables: games, game_ratings';
     RAISE NOTICE '🎬 Genres seeded with TMDB standard genres';
 END $$;

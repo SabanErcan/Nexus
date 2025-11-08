@@ -9,6 +9,9 @@ from contextlib import asynccontextmanager
 
 from app.config import settings
 from app.database import engine, Base
+# Importer les modèles (enregistrent les classes SQLAlchemy) avant
+# d'importer les routers qui peuvent déclencher des opérations DB.
+import app.models  # noqa: F401
 from app.api import api_router
 
 

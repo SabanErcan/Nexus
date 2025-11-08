@@ -32,6 +32,7 @@ class Track(Base):
     
     # Relations
     ratings = relationship("MusicRating", back_populates="track", cascade="all, delete-orphan")
+    recommendations = relationship("MusicRecommendation", back_populates="track", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Track(spotify_id='{self.spotify_id}', title='{self.title}', artist='{self.artist}')>"

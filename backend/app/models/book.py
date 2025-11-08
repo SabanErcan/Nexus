@@ -2,7 +2,7 @@
 Modèles Book et BookRating - Gestion des livres via Google Books API
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON, CheckConstraint, UniqueConstraint
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, ARRAY, Text, DECIMAL, CheckConstraint, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -17,21 +17,21 @@ class Book(Base):
     id = Column(Integer, primary_key=True, index=True)
     google_books_id = Column(String(100), unique=True, nullable=False, index=True)
     title = Column(String(500), nullable=False, index=True)
-    authors = Column(JSON, default=list)  # Liste des auteurs
-    description = Column(String(5000))
-    publisher = Column(String(200))
+    authors = Column(ARRAY(Text), default=list)  # Liste des auteurs
+    description = Column(Text)
+    publisher = Column(String(300))
     published_date = Column(String(50))  # Format YYYY ou YYYY-MM-DD
     page_count = Column(Integer)
-    categories = Column(JSON, default=list)  # Genres/catégories
+    categories = Column(ARRAY(Text), default=list)  # Genres/catégories
     image_url = Column(String(500))  # URL de la couverture
     language = Column(String(10))  # Code langue (ex: 'fr', 'en')
-    isbn_13 = Column(String(13))
-    average_rating = Column(Integer)  # Note Google Books
+    isbn_13 = Column(String(20))
+    average_rating = Column(DECIMAL(3, 2))  # Note Google Books (ex: 4.5)
     ratings_count = Column(Integer)  # Nombre de notes Google Books
     
     # Métadonnées
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # Relations
     ratings = relationship("BookRating", back_populates="book", cascade="all, delete-orphan")
@@ -54,7 +54,7 @@ class BookRating(Base):
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # Relations
     user = relationship("User", back_populates="book_ratings")

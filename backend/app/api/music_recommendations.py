@@ -6,7 +6,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_current_user
+from app.dependencies import get_db, get_current_user
 from app.models.user import User
 from app.schemas.recommendation import MusicRecommendationResponse
 from app.services.music_recommendation_engine import MusicRecommendationEngine

@@ -12,17 +12,9 @@ const MusicCard = ({ track, onRatingChange, userRating }) => {
     const audioRef = React.useRef(null);
 
     const handleRatingChange = async (newRating) => {
-        try {
-            if (userRating) {
-                await musicService.updateRating(userRating.id, newRating);
-            } else {
-                await musicService.rateTrack(track.id, newRating);
-            }
-            if (onRatingChange) {
-                onRatingChange(newRating);
-            }
-        } catch (error) {
-            console.error('Error rating track:', error);
+        // Le composant parent gère maintenant la logique de create/update
+        if (onRatingChange) {
+            onRatingChange(newRating);
         }
     };
 
@@ -94,8 +86,14 @@ const MusicCard = ({ track, onRatingChange, userRating }) => {
 
             <div className="px-6 py-4 flex items-center justify-between">
                 <RatingStars
-                    rating={userRating ? userRating.rating : 0}
-                    onRatingChange={handleRatingChange}
+                    initialRating={
+                        typeof userRating === 'object' && userRating !== null && userRating.rating !== undefined
+                            ? userRating.rating
+                            : typeof userRating === 'number'
+                            ? userRating
+                            : 0
+                    }
+                    onRate={handleRatingChange}
                 />
                 <a
                     href={`https://open.spotify.com/track/${track.spotify_id}`}
@@ -122,10 +120,14 @@ MusicCard.propTypes = {
         image_url: PropTypes.string
     }).isRequired,
     onRatingChange: PropTypes.func,
-    userRating: PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        rating: PropTypes.number.isRequired
-    })
+    // userRating peut être soit un nombre (nouveau format), soit un objet (ancien format)
+    userRating: PropTypes.oneOfType([
+        PropTypes.number,
+        PropTypes.shape({
+            id: PropTypes.number.isRequired,
+            rating: PropTypes.number.isRequired
+        })
+    ])
 };
 
 export default MusicCard;

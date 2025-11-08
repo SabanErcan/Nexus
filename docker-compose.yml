@@ -43,7 +43,8 @@ services:
       - ./backend:/app
     networks:
       - nexus_network
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    # Run uvicorn without --reload to avoid file-watcher issues on Windows/OneDrive mounts
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   # Frontend React
   frontend:

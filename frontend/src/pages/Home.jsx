@@ -41,7 +41,7 @@ const Home = () => {
       setUserRatings(ratingsMap)
     } catch (error) {
       console.error('Failed to load movies:', error)
-      toast.error('Erreur lors du chargement des films')
+      toast.error(`Erreur: ${error.response?.data?.detail || error.message || 'Impossible de charger les films'}`)
     } finally {
       setLoading(false)
     }
@@ -155,11 +155,20 @@ const Home = () => {
       </div>
 
       {/* Movies Grid */}
-      <MovieGrid
-        movies={displayedMovies}
-        onRate={handleRate}
-        userRatings={userRatings}
-      />
+      {displayedMovies.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-xl text-gray-400 mb-2">Aucun film disponible</p>
+          <p className="text-sm text-gray-500">
+            Vérifiez votre connexion backend et la clé API TMDB
+          </p>
+        </div>
+      ) : (
+        <MovieGrid
+          movies={displayedMovies}
+          onRate={handleRate}
+          userRatings={userRatings}
+        />
+      )}
     </div>
   )
 }

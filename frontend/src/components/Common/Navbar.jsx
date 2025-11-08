@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Film, Music, Compass, Star, Sparkles, User, LogOut } from 'lucide-react'
+import { Film, Music, Book, Tv, Gamepad2, Compass, Star, Sparkles, User, LogOut } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { motion } from 'framer-motion'
 
@@ -7,9 +7,17 @@ const Navbar = () => {
   const location = useLocation()
   const { user, logout } = useAuth()
 
-  const navItems = [
+  // Catégories de médias
+  const mediaItems = [
     { path: '/movies', label: 'Films', icon: Film },
     { path: '/music', label: 'Musique', icon: Music },
+    { path: '/books', label: 'Livres', icon: Book },
+    { path: '/tv-shows', label: 'Séries', icon: Tv },
+    { path: '/games', label: 'Jeux', icon: Gamepad2 },
+  ]
+
+  // Actions utilisateur
+  const userActions = [
     { path: '/discover', label: 'Découvrir', icon: Compass },
     { path: '/my-ratings', label: 'Mes Notes', icon: Star },
     { path: '/recommendations', label: 'Recommandations', icon: Sparkles },
@@ -30,35 +38,73 @@ const Navbar = () => {
           </Link>
 
           {/* Navigation Links */}
-          <div className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const active = isActive(item.path)
-              
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className="relative px-4 py-2 rounded-lg transition-colors"
-                >
-                  <div className={`flex items-center space-x-2 ${
-                    active ? 'text-primary-400' : 'text-gray-400 hover:text-gray-200'
-                  }`}>
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
-                  </div>
-                  
-                  {active && (
-                    <motion.div
-                      layoutId="navbar-indicator"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500"
-                      initial={false}
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                </Link>
-              )
-            })}
+          <div className="hidden lg:flex items-center space-x-6">
+            {/* Médias */}
+            <div className="flex items-center space-x-1">
+              {mediaItems.map((item) => {
+                const Icon = item.icon
+                const active = isActive(item.path)
+                
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className="relative px-3 py-2 rounded-lg transition-colors"
+                  >
+                    <div className={`flex items-center space-x-2 ${
+                      active ? 'text-primary-400' : 'text-gray-400 hover:text-gray-200'
+                    }`}>
+                      <Icon className="w-5 h-5" />
+                      <span className="font-medium text-sm">{item.label}</span>
+                    </div>
+                    
+                    {active && (
+                      <motion.div
+                        layoutId="navbar-indicator"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500"
+                        initial={false}
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+
+            {/* Séparateur */}
+            <div className="h-8 w-px bg-dark-border"></div>
+
+            {/* Actions */}
+            <div className="flex items-center space-x-1">
+              {userActions.map((item) => {
+                const Icon = item.icon
+                const active = isActive(item.path)
+                
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className="relative px-3 py-2 rounded-lg transition-colors"
+                  >
+                    <div className={`flex items-center space-x-2 ${
+                      active ? 'text-primary-400' : 'text-gray-400 hover:text-gray-200'
+                    }`}>
+                      <Icon className="w-5 h-5" />
+                      <span className="font-medium text-sm">{item.label}</span>
+                    </div>
+                    
+                    {active && (
+                      <motion.div
+                        layoutId="navbar-indicator-actions"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500"
+                        initial={false}
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
           </div>
 
           {/* User Menu */}
@@ -84,10 +130,10 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Navigation (optionnel) */}
-      <div className="md:hidden border-t border-dark-border">
-        <div className="flex justify-around py-2">
-          {navItems.map((item) => {
+      {/* Mobile Navigation */}
+      <div className="lg:hidden border-t border-dark-border overflow-x-auto">
+        <div className="flex space-x-1 py-2 px-2 min-w-max">
+          {[...mediaItems, ...userActions].map((item) => {
             const Icon = item.icon
             const active = isActive(item.path)
             
@@ -95,12 +141,12 @@ const Navbar = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center space-y-1 px-3 py-2 ${
-                  active ? 'text-primary-400' : 'text-gray-500'
+                className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg ${
+                  active ? 'text-primary-400 bg-primary-500/10' : 'text-gray-500'
                 }`}
               >
                 <Icon className="w-5 h-5" />
-                <span className="text-xs">{item.label}</span>
+                <span className="text-xs whitespace-nowrap">{item.label}</span>
               </Link>
             )
           })}

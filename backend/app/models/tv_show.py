@@ -2,7 +2,7 @@
 Modèles TVShow et TVRating - Gestion des séries TV via TMDB
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON, Date, CheckConstraint, UniqueConstraint
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON, Date, CheckConstraint, UniqueConstraint, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base

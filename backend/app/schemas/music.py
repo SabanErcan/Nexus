@@ -30,7 +30,7 @@ class TrackResponse(TrackBase):
     """Schema de réponse pour une piste"""
     id: int
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -57,7 +57,7 @@ class MusicRatingResponse(MusicRatingBase):
     track_id: int
     track: TrackResponse
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 

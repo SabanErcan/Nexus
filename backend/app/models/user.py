@@ -20,12 +20,15 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     
     # Relations - Films
-    movie_ratings = relationship("Rating", back_populates="user", cascade="all, delete-orphan")
+    # Use canonical name 'ratings' to match back_populates on Rating
+    ratings = relationship("Rating", back_populates="user", cascade="all, delete-orphan")
     recommendations = relationship("Recommendation", back_populates="user", cascade="all, delete-orphan")
     movie_preferences = relationship("UserMoviePreference", back_populates="user", uselist=False, cascade="all, delete-orphan")
     
     # Relations - Autres médias
-    preferences = relationship("UserPreference", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    # UserPreference relationship (single row per user)
+    # back_populates points to 'user_pref' on the UserPreference side
+    preferences = relationship("UserPreference", back_populates="user_pref", uselist=False, cascade="all, delete-orphan")
     music_ratings = relationship("MusicRating", back_populates="user", cascade="all, delete-orphan")
     music_recommendations = relationship("MusicRecommendation", back_populates="user", cascade="all, delete-orphan")
     book_ratings = relationship("BookRating", back_populates="user", cascade="all, delete-orphan")

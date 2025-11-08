@@ -21,7 +21,22 @@ class UserMoviePreference(Base):
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # Relations
-    user = relationship("User", back_populates="preferences")
+    # This links to User.movie_preferences
+    user = relationship("User", back_populates="movie_preferences")
     
     def __repr__(self):
         return f"<UserMoviePreference(user_id={self.user_id}, total_ratings={self.total_ratings})>"
+
+# Ajout du modèle UserPreference pour multi-médias
+class UserPreference(Base):
+    __tablename__ = "user_preferences"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    preferences = Column(JSON)  # {"music": {...}, "books": {...}, ...}
+    onboarding_status = Column(JSON)  # {"music": true, "books": false, ...}
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relation back to User - use a distinct attribute name to avoid
+    # potential import/mapping ordering issues
+    user_pref = relationship("User", back_populates="preferences")

@@ -105,9 +105,21 @@ class SpotifyService:
                 return response.json()
                 
             except httpx.HTTPError as e:
+                # Log l'erreur complète
+                error_msg = f"Spotify API error: {str(e)}"
+                if hasattr(e, 'response') and e.response:
+                    error_msg += f"\nStatus: {e.response.status_code}"
+                    error_msg += f"\nURL: {e.response.url}"
+                    try:
+                        error_msg += f"\nResponse: {e.response.text}"
+                    except:
+                        pass
+                
+                print(f"[SPOTIFY ERROR] {error_msg}")
+                
                 raise HTTPException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail=f"Spotify API error: {str(e)}"
+                    detail=error_msg
                 )
     
     async def search_tracks(self, query: str, limit: int = 20, offset: int = 0) -> Dict[str, Any]:
@@ -164,14 +176,35 @@ class SpotifyService:
         """
         params = {"limit": limit}
         
+        # Vérifier qu'au moins un seed est fourni
+        has_seeds = False
+        
         if seed_tracks:
             params["seed_tracks"] = ",".join(seed_tracks[:5])
+            has_seeds = True
         if seed_artists:
             params["seed_artists"] = ",".join(seed_artists[:5])
+            has_seeds = True
         if seed_genres:
             params["seed_genres"] = ",".join(seed_genres[:5])
+            has_seeds = True
         
-        return await self._make_request("/recommendations", params)
+        # Si aucun seed n'est fourni, utiliser des genres par défaut
+        if not has_seeds:
+            params["seed_genres"] = "pop,rock,hip-hop"
+        
+        try:
+            return await self._make_request("/recommendations", params)
+        except HTTPException as e:
+            # Si les track seeds échouent (404), réessayer avec des genres
+            if "404" in str(e.detail) and seed_tracks:
+                print(f"[SPOTIFY] Track seeds failed, retrying with genres...")
+                params = {
+                    "limit": limit,
+                    "seed_genres": "pop,rock,hip-hop,electronic,indie"
+                }
+                return await self._make_request("/recommendations", params)
+            raise
     
     async def get_new_releases(self, limit: int = 20, offset: int = 0) -> Dict[str, Any]:
         """

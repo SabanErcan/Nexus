@@ -6,6 +6,7 @@ import ProtectedRoute from './components/Auth/ProtectedRoute'
 // Pages
 import Login from './pages/Login'
 import Register from './pages/Register'
+import QuickLaunch from './pages/QuickLaunch'
 import Home from './pages/Home'
 import Discover from './pages/Discover'
 import MyRatings from './pages/MyRatings'
@@ -14,9 +15,14 @@ import Profile from './pages/Profile'
 import MusicSearch from './pages/MusicSearch'
 import MusicDiscover from './pages/MusicDiscover'
 import MusicRatings from './pages/MusicRatings'
+import MusicRecommendations from './pages/MusicRecommendations'
+import BookSearch from './pages/BookSearch'
+import BookRatings from './pages/BookRatings'
+import BookRecommendations from './pages/BookRecommendations'
+import Books from './pages/Books'
 
 // Layout
-import Navbar from './components/Common/Navbar'
+import Sidebar from './components/Common/Sidebar'
 
 function App() {
   return (
@@ -47,24 +53,35 @@ function App() {
             
             {/* Routes protégées */}
             <Route element={<ProtectedRoute />}>
+              {/* QuickLaunch - Page d'accueil principale */}
+              <Route path="/" element={<QuickLaunch />} />
+              
               <Route
                 element={
                   <>
-                    <Navbar />
-                    <div className="pt-16">
+                    <Sidebar />
+                    <div className="lg:pl-72">
                       <Outlet />
                     </div>
                   </>
                 }
               >
-                <Route path="/" element={<Home />} />
+                <Route path="/home" element={<Home />} />
                 <Route path="/movies" element={<Home />} />
+                <Route path="/movies/discover" element={<Discover />} />
+                <Route path="/movies/ratings" element={<MyRatings />} />
+                <Route path="/movies/recommendations" element={<Recommendations />} />
+                
                 <Route path="/music" element={<MusicSearch />} />
                 <Route path="/music/discover" element={<MusicDiscover />} />
                 <Route path="/music/ratings" element={<MusicRatings />} />
-                <Route path="/discover" element={<Discover />} />
-                <Route path="/my-ratings" element={<MyRatings />} />
-                <Route path="/recommendations" element={<Recommendations />} />
+                <Route path="/music/recommendations" element={<MusicRecommendations />} />
+                
+                <Route path="/books" element={<BookSearch />} />
+                <Route path="/books/discover" element={<BookSearch />} />
+                <Route path="/books/ratings" element={<BookRatings />} />
+                <Route path="/books/recommendations" element={<BookRecommendations />} />
+                
                 <Route path="/profile" element={<Profile />} />
               </Route>
             </Route>

@@ -5,7 +5,7 @@ Générer, consulter, expliquer les recommandations
 
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
 from app.schemas.recommendation import RecommendationResponse, RecommendationExplanation
@@ -14,7 +14,9 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.recommendation import Recommendation
 from app.models.movie import Movie
+from app.models.rating import Rating
 from app.services.recommendation_engine import RecommendationEngine
+from app.services.tmdb_service import TMDBService
 
 
 router = APIRouter()
@@ -23,23 +25,150 @@ router = APIRouter()
 @router.post("/generate", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def generate_recommendations(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    limit: int = Query(20, ge=1, le=50)
 ):
     """
-    Génère de nouvelles recommandations pour l'utilisateur connecté
+    Génère de nouvelles recommandations basées sur les films bien notés
     
-    Utilise l'algorithme hybride (filtrage collaboratif + basé contenu)
-    
-    Nécessite au moins 3 films notés pour des recommandations personnalisées.
-    Sinon, retourne des films populaires.
+    Recherche des films similaires via TMDB (même réalisateur, acteurs, genres)
     """
-    engine = RecommendationEngine(db)
-    recommendations = engine.generate_recommendations(current_user.id)
+    tmdb_service = TMDBService()
+    
+    # Supprimer les anciennes recommandations
+    db.query(Recommendation).filter(
+        Recommendation.user_id == current_user.id
+    ).delete()
+    db.commit()
+    
+    # Récupérer les films les mieux notés (≥4 étoiles)
+    top_ratings = db.query(Rating).options(
+        joinedload(Rating.movie)
+    ).filter(
+        Rating.user_id == current_user.id,
+        Rating.rating >= 4
+    ).order_by(Rating.rating.desc()).limit(5).all()
+    
+    if not top_ratings:
+        # Si pas de notes élevées, utiliser les films populaires
+        popular_movies = await tmdb_service.get_popular_movies(limit=limit)
+        
+        for idx, movie_data in enumerate(popular_movies):
+            movie = tmdb_service.save_movie_to_db(db, movie_data)
+            
+            recommendation = Recommendation(
+                user_id=current_user.id,
+                movie_id=movie.tmdb_id,
+                score=0.8 - (idx * 0.02),  # Score décroissant
+                algorithm_type="popular",
+                explanation="Film populaire recommandé"
+            )
+            db.add(recommendation)
+        
+        db.commit()
+        return {
+            "message": "Généré des recommandations populaires (notez plus de films pour des recommandations personnalisées)",
+            "count": len(popular_movies)
+        }
+    
+    recommendations_set = set()
+    recommendations_count = 0
+    
+    # Pour chaque film bien noté, rechercher des films similaires
+    for rating in top_ratings:
+        if recommendations_count >= limit:
+            break
+            
+        movie = rating.movie
+        
+        try:
+            # Récupérer les films similaires via TMDB
+            similar_movies = await tmdb_service.get_similar_movies(movie.tmdb_id, limit=10)
+            
+            for similar_data in similar_movies:
+                if recommendations_count >= limit:
+                    break
+                
+                similar_tmdb_id = similar_data["id"]
+                
+                # Éviter les doublons et les films déjà notés
+                if similar_tmdb_id in recommendations_set:
+                    continue
+                
+                already_rated = db.query(Rating).filter(
+                    Rating.user_id == current_user.id,
+                    Rating.movie_id == similar_tmdb_id
+                ).first()
+                
+                if already_rated:
+                    continue
+                
+                # Sauvegarder le film
+                similar_movie = tmdb_service.save_movie_to_db(db, similar_data)
+                
+                # Calculer le score de correspondance
+                match_score = 0.9 - (recommendations_count * 0.01)
+                
+                # Créer la recommandation
+                recommendation = Recommendation(
+                    user_id=current_user.id,
+                    movie_id=similar_movie.tmdb_id,
+                    score=match_score,
+                    algorithm_type="content_based",
+                    explanation=f"Recommandé car vous avez aimé '{movie.title}' ({rating.rating}⭐)"
+                )
+                
+                db.add(recommendation)
+                recommendations_set.add(similar_tmdb_id)
+                recommendations_count += 1
+        
+        except Exception as e:
+            print(f"[RECOMMENDATIONS] Erreur pour le film {movie.title}: {str(e)}")
+            continue
+    
+    # Compléter avec des films populaires si nécessaire
+    if recommendations_count < limit:
+        try:
+            popular_movies = await tmdb_service.get_popular_movies(limit=limit - recommendations_count)
+            
+            for movie_data in popular_movies:
+                tmdb_id = movie_data["id"]
+                
+                if tmdb_id in recommendations_set:
+                    continue
+                
+                already_rated = db.query(Rating).filter(
+                    Rating.user_id == current_user.id,
+                    Rating.movie_id == tmdb_id
+                ).first()
+                
+                if already_rated:
+                    continue
+                
+                movie = tmdb_service.save_movie_to_db(db, movie_data)
+                
+                recommendation = Recommendation(
+                    user_id=current_user.id,
+                    movie_id=movie.tmdb_id,
+                    score=0.7,
+                    algorithm_type="popular",
+                    explanation="Film populaire recommandé"
+                )
+                
+                db.add(recommendation)
+                recommendations_count += 1
+                
+                if recommendations_count >= limit:
+                    break
+        
+        except Exception as e:
+            print(f"[RECOMMENDATIONS] Erreur lors de la récupération des films populaires: {str(e)}")
+    
+    db.commit()
     
     return {
-        "message": f"Generated {len(recommendations)} recommendations",
-        "count": len(recommendations),
-        "recommendations_ids": [r.movie_id for r in recommendations]
+        "message": f"Généré {recommendations_count} recommandations personnalisées",
+        "count": recommendations_count
     }
 
 
