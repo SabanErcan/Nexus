@@ -73,9 +73,21 @@ app = FastAPI(
 
 
 # Configuration CORS
+# Normalize cors_origins: allow a single string in env or a list
+cors_origins = settings.cors_origins
+if isinstance(cors_origins, str):
+    # support comma separated list in env if accidentally provided
+    if "," in cors_origins:
+        cors_origins = [o.strip() for o in cors_origins.split(",") if o.strip()]
+    else:
+        cors_origins = [cors_origins]
+
+# In development, it's sometimes convenient to allow all origins. Keep current
+# behavior but allow overriding via environment. If you need to debug CORS
+# issues, you can temporarily set allow_origins=["*"] here.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,  # Liste des origines autorisées
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],  # Autoriser toutes les méthodes HTTP
     allow_headers=["*"],  # Autoriser tous les headers

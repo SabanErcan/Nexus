@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/Auth/ProtectedRoute'
@@ -44,7 +44,16 @@ function App() {
             
             {/* Routes protégées */}
             <Route element={<ProtectedRoute />}>
-              <Route element={<><Navbar /><div className="pt-16"><Routes><Route path="/" element={<Home />} /><Route path="/discover" element={<Discover />} /><Route path="/my-ratings" element={<MyRatings />} /><Route path="/recommendations" element={<Recommendations />} /><Route path="/profile" element={<Profile />} /></Routes></div></>}>
+              <Route
+                element={
+                  <>
+                    <Navbar />
+                    <div className="pt-16">
+                      <Outlet />
+                    </div>
+                  </>
+                }
+              >
                 <Route path="/" element={<Home />} />
                 <Route path="/discover" element={<Discover />} />
                 <Route path="/my-ratings" element={<MyRatings />} />

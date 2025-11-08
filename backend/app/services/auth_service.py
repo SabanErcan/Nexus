@@ -14,8 +14,10 @@ from app.models.user import User
 from app.schemas.user import TokenData
 
 
-# Configuration du hashing bcrypt
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Configuration du hashing - utiliser Argon2 (supporte les mots de passe longs)
+# Argon2 est moderne et ne souffre pas de la limite de 72 octets de bcrypt.
+# On garde bcrypt_sha256 et bcrypt en fallback pour compatibilité.
+pwd_context = CryptContext(schemes=["argon2", "bcrypt_sha256", "bcrypt"], deprecated="auto")
 
 
 class AuthService:
@@ -26,11 +28,23 @@ class AuthService:
     @staticmethod
     def hash_password(password: str) -> str:
         """Hash un mot de passe avec bcrypt"""
-        return pwd_context.hash(password)
+        # Use the configured pwd_context (argon2 primary). Don't truncate here
+        # because Argon2 supports arbitrary-length passwords. Keep try/except
+        # to surface friendly errors.
+        try:
+            return pwd_context.hash(password)
+        except ValueError as e:
+            # Surface a clearer HTTPException so the API client gets a readable error.
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=("Password is too long for bcrypt (max 72 bytes). "
+                        "Use a shorter password or contact the administrator."),
+            ) from e
     
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         """Vérifie un mot de passe contre son hash"""
+        # Verify using the same context. Argon2 doesn't require truncation.
         return pwd_context.verify(plain_password, hashed_password)
     
     @staticmethod

@@ -36,6 +36,14 @@ class TMDBService:
         if params is None:
             params = {}
         
+        # If API key is missing or left as placeholder, return a clear error
+        if not self.api_key or self.api_key.startswith("your_"):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=("TMDB API key is not configured or is a placeholder. "
+                        "Set TMDB_API_KEY in backend/.env or your environment and restart the service."),
+            )
+
         params["api_key"] = self.api_key
         params["language"] = "fr-FR"  # Langue française
         

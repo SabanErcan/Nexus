@@ -38,6 +38,7 @@ __all__ = [
     "UserWithStats",
     "Token",
     "TokenData",
+    
     # Movie schemas
     "MovieBase",
     "MovieCreate",
@@ -45,12 +46,14 @@ __all__ = [
     "MovieDetail",
     "GenreResponse",
     "MovieSearchResponse",
+    
     # Rating schemas
     "RatingCreate",
     "RatingUpdate",
     "RatingResponse",
     "UserRatingStats",
+    
     # Recommendation schemas
     "RecommendationResponse",
-    "RecommendationExplanation",
+    "RecommendationExplanation"
 ]
