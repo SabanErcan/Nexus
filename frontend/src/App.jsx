@@ -67,7 +67,7 @@ function App() {
                 }
               >
                 <Route path="/home" element={<Home />} />
-                <Route path="/movies" element={<Home />} />
+                <Route path="/movies" element={<Discover />} />
                 <Route path="/movies/discover" element={<Discover />} />
                 <Route path="/movies/ratings" element={<MyRatings />} />
                 <Route path="/movies/recommendations" element={<Recommendations />} />

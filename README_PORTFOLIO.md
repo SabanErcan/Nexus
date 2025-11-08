@@ -221,35 +221,20 @@ docker-compose up -d
 
 ---
 
-## 📸 Captures d'écran
+## 📸 Aperçu de l'Application
 
-### 🏠 Page d'Accueil / Connexion
-![Login](screenshots/login.png)
-*Interface de connexion moderne avec gradient animé*
+L'application propose une interface moderne et intuitive avec :
 
-### 🎬 Découverte de Films
-![Movies Discovery](screenshots/movies-discover.png)
-*Grille de films populaires avec système de notation interactif*
+- **🏠 Connexion/Inscription** : Interface élégante avec gradient animé
+- **🎬 Découverte de Films** : Grille de films populaires avec système de notation interactif (1-5 étoiles)
+- **📊 Mes Notes** : Dashboard personnel avec statistiques (Total, Moyenne, Films favoris ≥4⭐)
+- **🎵 Musique** : Recherche et découverte de morceaux avec intégration Spotify
+- **📚 Livres** : Parcourir les bestsellers avec couvertures, auteurs et catégories
+- **🎯 Recommandations** : Suggestions personnalisées basées sur vos goûts
+- **👤 Profil** : Statistiques globales et gestion du compte
+- **🎨 UI/UX** : Design dark moderne, animations Framer Motion, responsive
 
-### 📊 Mes Notes de Films
-![My Ratings](screenshots/movies-ratings.png)
-*Dashboard personnel avec statistiques (Total, Moyenne, Top-rated)*
-
-### 🎵 Recherche Musicale
-![Music Search](screenshots/music-search.png)
-*Interface de recherche avec résultats en temps réel*
-
-### 📚 Livres
-![Books](screenshots/books.png)
-*Découverte de livres avec couvertures, auteurs et catégories*
-
-### 🎯 Recommandations
-![Recommendations](screenshots/recommendations.png)
-*Recommandations personnalisées basées sur vos goûts*
-
-### 👤 Profil Utilisateur
-![Profile](screenshots/profile.png)
-*Statistiques globales et gestion du compte*
+**Captures d'écran disponibles dans le dossier du projet**
 
 ---
 
