@@ -258,6 +258,3 @@ IUT Aix-Marseille, Arles
 - [FastAPI](https://fastapi.tiangolo.com/) pour le framework backend
 - [React](https://react.dev/) pour le framework frontend
 
----
-
-**⭐ Si ce projet te plaît, n'hésite pas à le star sur GitHub !**
